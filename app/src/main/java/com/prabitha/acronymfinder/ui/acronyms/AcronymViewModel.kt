@@ -31,7 +31,9 @@ class AcronymViewModel @Inject constructor(private val repo: AcronymRepository) 
 
     private var job: Job? = null
     private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
-        handleError(throwable.message.toString())
+        handleError(
+            throwable.message ?: Constants.EMPTY_STRING
+        )
     }
 
     fun getAcronyms(query: String) {

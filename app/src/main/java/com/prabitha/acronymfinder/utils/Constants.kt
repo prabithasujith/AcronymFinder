@@ -8,5 +8,6 @@ class Constants {
         const val NO_INTERNET = "No Internet Connection"
         const val REQUEST_KEY = "requestKey"
         const val DATA ="data"
+        const val EMPTY_STRING = ""
     }
 }
