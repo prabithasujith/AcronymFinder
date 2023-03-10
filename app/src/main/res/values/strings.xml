@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">AcronymFinder</string>
+
+
+    <string name="lf">Long Form:</string>
+    <string name="freq">Frequency:</string>
+    <string name="since">Since:</string>
+    <string name="query_hint">Enter the short form to search</string>
+</resources>
