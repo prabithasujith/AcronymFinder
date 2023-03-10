@@ -5,9 +5,9 @@ import androidx.databinding.BindingAdapter
 
 
 @BindingAdapter(value = ["view_visibility"])
-fun setRecyclerViewItems(view: View, isLoading: Boolean) {
+fun setVisibility(view: View, isVisible: Boolean) {
 
-    if (isLoading)
+    if (isVisible)
         view.visibility = View.VISIBLE
     else
         view.visibility = View.GONE
