@@ -17,7 +17,6 @@ import com.prabitha.acronymfinder.utils.Constants
 import com.prabitha.acronymfinder.utils.isNetworkConnectionAvailable
 import com.prabitha.acronymfinder.utils.showToast
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class AcronymFragment : Fragment() {
@@ -62,6 +61,7 @@ class AcronymFragment : Fragment() {
             }
         })
         binding.rvAcronyms.adapter = adapter
+        binding.lifecycleOwner = this
         return binding.root
     }
 

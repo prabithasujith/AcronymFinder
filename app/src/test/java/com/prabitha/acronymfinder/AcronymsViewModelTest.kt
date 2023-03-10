@@ -1,5 +1,6 @@
 package com.prabitha.acronymfinder
 
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.prabitha.acronymfinder.data.AcronymRepository
 import com.prabitha.acronymfinder.ui.acronyms.AcronymViewModel
 import com.prabitha.acronymfinder.utils.Constants
@@ -24,6 +25,8 @@ class AcronymsViewModelTest {
     @get:Rule
     var mainCoroutineRule = MainCoroutineRule()
 
+    @get:Rule
+    val rule = InstantTaskExecutorRule()
 
     @RelaxedMockK
     lateinit var acronymRepository: AcronymRepository
@@ -47,45 +50,50 @@ class AcronymsViewModelTest {
                     getAcronymResponse()
                 )
             )
-            acronymViewModel.getAcronyms("abc")
-            val result = acronymViewModel.showErrorMessage
-            assert(!result.get())
-        }
 
+
+            acronymViewModel.getAcronyms("abc")
+            val value = acronymViewModel.acronyms.getOrAwaitValue()
+            assert(value.isNotEmpty())
+        }
     }
 
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    @Test
-    fun `Given when there is empty result, show error message should be true`() {
-        runTest {
-            coEvery { acronymRepository.getAcronyms("abc") } returns Response.success(
-                listOf(
+        @OptIn(ExperimentalCoroutinesApi::class)
+        @Test
+        fun `Given when there is empty result, show error message should be true`() {
+            runTest {
+                coEvery { acronymRepository.getAcronyms("abc") } returns Response.success(
+                    listOf(
+                    )
                 )
-            )
-            acronymViewModel.getAcronyms("abc")
+                acronymViewModel.getAcronyms("abc")
+                val value = acronymViewModel.acronyms.getOrAwaitValue() ?: emptyList()
+                assert(value.isEmpty())
+
+                val showError = acronymViewModel.showErrorMessage.getOrAwaitValue()
+                assert(showError)
+
+                val errorMessage = acronymViewModel.errorMessage.getOrAwaitValue()
+                assert(errorMessage == Constants.NO_DATA_FOUND)
+            }
+
         }
-        val result = acronymViewModel.acronyms.value ?: emptyList()
-        assert(result.isEmpty())
-        val errorMessage = acronymViewModel.errorMessage.get() ?: ""
-        assert(errorMessage == Constants.NO_DATA_FOUND)
-        val showErrorMessage = acronymViewModel.showErrorMessage.get()
-        assert(showErrorMessage)
+
     }
 
-}
 
-@ExperimentalCoroutinesApi
-class MainCoroutineRule(private val dispatcher: TestDispatcher = UnconfinedTestDispatcher()) :
-    TestWatcher() {
+    @ExperimentalCoroutinesApi
+    class MainCoroutineRule(private val dispatcher: TestDispatcher = UnconfinedTestDispatcher()) :
+        TestWatcher() {
 
-    override fun starting(description: Description) {
-        super.starting(description)
-        Dispatchers.setMain(dispatcher)
+        override fun starting(description: Description) {
+            super.starting(description)
+            Dispatchers.setMain(dispatcher)
+        }
+
+        override fun finished(description: Description) {
+            super.finished(description)
+            Dispatchers.resetMain()
+        }
     }
-
-    override fun finished(description: Description) {
-        super.finished(description)
-        Dispatchers.resetMain()
-    }
-}

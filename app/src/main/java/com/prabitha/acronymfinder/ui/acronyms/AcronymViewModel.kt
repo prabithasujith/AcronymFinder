@@ -1,7 +1,6 @@
 package com.prabitha.acronymfinder.ui.acronyms
 
-import androidx.databinding.ObservableBoolean
-import androidx.databinding.ObservableField
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -17,24 +16,37 @@ import javax.inject.Inject
 class AcronymViewModel @Inject constructor(private val repo: AcronymRepository) : ViewModel() {
 
     val acronyms = MutableLiveData<List<Acronyms>>()
-    val isLoading = ObservableBoolean(false)
-    val showErrorMessage = ObservableBoolean(true)
-    val errorMessage = ObservableField(Constants.NO_DATA)
+
+    private val _isLoading = MutableLiveData(false)
+    val isLoading: LiveData<Boolean>
+        get() = _isLoading
+
+    private val _showErrorMessage = MutableLiveData(true)
+    val showErrorMessage: LiveData<Boolean>
+        get() = _showErrorMessage
+
+    private val _errorMessage = MutableLiveData(Constants.NO_DATA)
+    val errorMessage: LiveData<String>
+        get() = _errorMessage
+
     private var job: Job? = null
+    private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        handleError(throwable.message.toString())
+    }
 
     fun getAcronyms(query: String) {
-        viewModelScope.launch {
-            showErrorMessage.set(false)
-            isLoading.set(true)
+        viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
+            _showErrorMessage.postValue(false)
+            _isLoading.postValue(true)
             val response = repo.getAcronyms(query)
             if (response.isSuccessful) {
                 val result = response.body() ?: emptyList()
                 when {
-                    result.isNotEmpty() -> acronyms.value = result
+                    result.isNotEmpty() -> acronyms.postValue(result)
                     else -> handleError(Constants.NO_DATA_FOUND)
                 }
             } else handleError(response.message())
-            isLoading.set(false)
+            _isLoading.postValue(false)
         }
     }
 
@@ -44,7 +56,8 @@ class AcronymViewModel @Inject constructor(private val repo: AcronymRepository) 
     }
 
     private fun handleError(message: String) {
-        errorMessage.set(message)
-        showErrorMessage.set(true)
+        acronyms.postValue(emptyList())
+        _errorMessage.postValue(message)
+        _showErrorMessage.postValue(true)
     }
 }
